@@ -1,4 +1,5 @@
 import collections 
+import itertools
 
 def load_words():
     with open('words_alpha.txt') as word_file:
@@ -36,11 +37,13 @@ if __name__ == '__main__':
         # Calculate frequency of characters
         freq_map_words = {}
         freq_counter = collections.Counter()
+        freq_2char_counter = collections.Counter()
 
         for w in ws:
             unique_chars = set(w)
             freq_map_words[w] = unique_chars
             freq_counter.update(unique_chars)
+            freq_2char_counter.update(itertools.combinations(w, 2))
 
         rank_words = {}
         for w in ws:
@@ -48,6 +51,9 @@ if __name__ == '__main__':
 
             for c in freq_map_words[w]:
                 rank_words[w] += freq_counter[c]
+
+            for c2 in itertools.combinations(w, 2):
+                rank_words[w] += freq_2char_counter[c2]
 
         return freq_map_words, list(reversed(sorted(rank_words, key=rank_words.get)))[:10]
 
@@ -79,6 +85,8 @@ if __name__ == '__main__':
         print(correct_chars_set)
         print(correct_chars_list)
         print(incorrect_chars_set)
+
+        incorrect_chars_set -= correct_chars_set
 
         wordle_words = { w for w in wordle_words if correct_chars_set.issubset(freq_map_words[w]) }
         wordle_words = { w for w in wordle_words if not any([u in incorrect_chars_set for u in freq_map_words[w]]) }

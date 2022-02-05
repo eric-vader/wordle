@@ -1,9 +1,9 @@
-from collections import Counter
+from collections import Counter, defaultdict
 import itertools
 
 def load_words():
     with open('words_alpha.txt') as word_file:
-        valid_words = set(word_file.read().split())
+        valid_words = set([ w.lower() for w in word_file.read().split() if w.isalpha()])
 
     return valid_words
 
@@ -30,41 +30,72 @@ if __name__ == '__main__':
 
     wordle_words = { w for w in english_words if len(w) == 5}
 
-    print(is_wordpos_correct("aries", [set(), {'r'}, set(), set(), set()]))
-
     def get_stats(ws):
 
         # Calculate frequency of characters
         freq_map_words = {}
+        
+        # positional_counter_map = defaultdict(lambda: [Counter(), Counter(), Counter(), Counter(), Counter()])
         positional_counter = [Counter(), Counter(), Counter(), Counter(), Counter()]
         freq_counter = Counter()
+        # Counter for a particulat unique set of chars
+        freq_counter_unique_map = defaultdict(lambda : 0)
+        positional_counter_unique_map = defaultdict(lambda : [Counter(), Counter(), Counter(), Counter(), Counter()])
         freq_2char_counter = Counter()
 
+        n_ws = len(ws)
+
         for w in ws:
-            unique_chars = Counter(w)
-            freq_map_words[w] = unique_chars
-            for ea_i_counter, c in zip(positional_counter, w):
+            unique_chars_counter = Counter(w)
+            unique_chars_set = frozenset(w)
+
+            freq_map_words[w] = unique_chars_counter
+            for ea_i_counter, c in zip(positional_counter_unique_map[unique_chars_set], w):
                 ea_i_counter.update([c])
 
-            freq_counter.update(unique_chars)
+            freq_counter_unique_map[unique_chars_set]+=1 #.update(unique_chars_set)
+
+            freq_counter.update(unique_chars_set)
             freq_2char_counter.update(itertools.combinations(w, 2))
+        
+        # Now we do DP to propagate the 1 to 2, 2 to 3 and so on...
+        max_unique_len = max([ len(s) for s in freq_counter_unique_map.keys()])
+        for l in range(2,max_unique_len+1):
+            for uniquechar_l in filter(lambda c: len(c)==l, freq_counter_unique_map.keys()):
+                for dominated_uniquechar_l in itertools.combinations(uniquechar_l, len(uniquechar_l)-1):
+                    dominated_uniquechar_l = frozenset(dominated_uniquechar_l)
+                    if dominated_uniquechar_l in freq_counter_unique_map:
+                        freq_counter_unique_map[uniquechar_l] += freq_counter_unique_map[dominated_uniquechar_l]
+
+                        for ea_target, ea_source in zip(positional_counter_unique_map[uniquechar_l], positional_counter_unique_map[dominated_uniquechar_l]):
+                            ea_target.update(ea_source)
 
         # for ea_i_counter in positional_counter:
         #     print(ea_i_counter.most_common(3))
+        n_unique = sum(freq_counter.values())
+
+        print(n_unique)
 
         rank_words = {}
         for w in ws:
-            rank_words[w] = 0
+            
+            unique_chars_set = frozenset(w)
+            
 
-            for ea_i_counter, ea_char in zip(positional_counter, w):
-                rank_words[w] += ea_i_counter[ea_char]
+            rank_words[w] = freq_counter_unique_map[unique_chars_set]/n_unique
+            char_sum_map = {}
+            for c in unique_chars_set:
+                char_sum_map[c] = sum([ ea_i_counter[c] for ea_i_counter in positional_counter_unique_map[unique_chars_set] ])
 
-            # for c in freq_map_words[w]:
-            #     rank_words[w] += freq_counter[c]
+            pos_stats = 0
+            for i, ea_i_counter, ea_char in zip(range(5), positional_counter_unique_map[unique_chars_set], w):
+                pos_stats += ea_i_counter[ea_char]/char_sum_map[ea_char]
+                # rank_words[w] += ea_i_counter[ea_char]
+            rank_words[w] *= pos_stats
 
             # for c2 in itertools.combinations(w, 2):
             #     rank_words[w] += freq_2char_counter[c2]
-
+        
         return freq_map_words, list(reversed(sorted(rank_words, key=rank_words.get)))[:10]
 
     freq_map_words, current_words = get_stats(wordle_words)

@@ -74,8 +74,6 @@ if __name__ == '__main__':
         #     print(ea_i_counter.most_common(3))
         n_unique = sum(freq_counter.values())
 
-        print(n_unique)
-
         rank_words = {}
         for w in ws:
             
@@ -107,9 +105,9 @@ if __name__ == '__main__':
 
         correct_chars_set = Counter()
 
-        current_word = input("Current Word:")
+        current_word = input("Current Word: ")
         response = input("Enter action (1 for correct, 2 for wrong pos, 0 else): ")
-        print(response)
+        # print(response)
 
         if response == "11111":
             break

@@ -78,23 +78,24 @@ if __name__ == '__main__':
         for w in ws:
             
             unique_chars_set = frozenset(w)
-            
 
-            rank_words[w] = freq_counter_unique_map[unique_chars_set]/n_unique
+            freq_stats = freq_counter_unique_map[unique_chars_set] # /n_unique
             char_sum_map = {}
             for c in unique_chars_set:
                 char_sum_map[c] = sum([ ea_i_counter[c] for ea_i_counter in positional_counter_unique_map[unique_chars_set] ])
 
-            pos_stats = 0
-            for i, ea_i_counter, ea_char in zip(range(5), positional_counter_unique_map[unique_chars_set], w):
-                pos_stats += ea_i_counter[ea_char]/char_sum_map[ea_char]
+            pos_stats = 1
+            for ea_i_counter, ea_char in zip(positional_counter_unique_map[unique_chars_set], w):
+                pos_stats *= ea_i_counter[ea_char]
                 # rank_words[w] += ea_i_counter[ea_char]
-            rank_words[w] *= pos_stats
+
+            # Sort biggest first.            
+            rank_words[w] = (-freq_stats, -pos_stats)
 
             # for c2 in itertools.combinations(w, 2):
             #     rank_words[w] += freq_2char_counter[c2]
         
-        return freq_map_words, list(reversed(sorted(rank_words, key=rank_words.get)))[:10]
+        return freq_map_words, list(sorted(rank_words, key=lambda w:rank_words.get(w)))[:10]
 
     freq_map_words, current_words = get_stats(wordle_words)
     print(current_words)

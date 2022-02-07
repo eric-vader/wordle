@@ -2,7 +2,7 @@ from collections import Counter, defaultdict
 import itertools
 
 def load_words():
-    with open('words_alpha.txt') as word_file:
+    with open('words_wordle.txt') as word_file:
         valid_words = set([ w.lower() for w in word_file.read().split() if w.isalpha()])
 
     return valid_words

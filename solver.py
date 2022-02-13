@@ -124,7 +124,7 @@ if __name__ == '__main__':
                 incorrect_chars_set.add(c)
 
         diff_incorrect_set = incorrect_chars_set - set(correct_chars_set.keys())
-        wordle_words = { w for w in wordle_words if is_wordpos_correct(list(w), correct_chars_list)}
+        wordle_words = { w for w in wordle_words if is_wordpos_correct(w, correct_chars_list)}
         wordle_words = { w for w in wordle_words if all([ freq_map_words[w][k] >= v for k,v in correct_chars_set.items() if not k in incorrect_chars_set ]) }
         wordle_words = { w for w in wordle_words if all([ freq_map_words[w][k] == v for k,v in correct_chars_set.items() if k in incorrect_chars_set ]) }
         wordle_words = { w for w in wordle_words if not any([u in diff_incorrect_set for u in set(freq_map_words[w].keys())]) }

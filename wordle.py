@@ -73,17 +73,17 @@ class WordleEnv(object):
         self.target_word = target_word
     def guess(self, guess_word):
         response = [0,0,0,0,0]
-        target_unique = set(self.target_word)
+        target_unique = list(self.target_word)
         
         for g_c, t_c, i in zip(guess_word, self.target_word, range(len(response))):
             if g_c == t_c:
                 response[i] = 1
-                target_unique.discard(t_c)
+                target_unique.remove(t_c)
 
         for g_c, i in zip(guess_word, range(len(response))):
-            if g_c in target_unique:
+            if g_c in target_unique and response[i]==0:
                 response[i] = 2
-                target_unique.discard(g_c)
+                target_unique.remove(g_c)
 
         return ''.join(map(str, response))
 
@@ -94,20 +94,20 @@ c = Constraint("11111", "brawl")
 print(c.apply_to(dict_ws).words)
 
 # print(list(product(*[[1,2,3],[1,2,3],[1,2,3]])))
-responses_perm = [ ''.join(perm) for perm in product(*(["123"]*5)) ]
+# responses_perm = [ ''.join(perm) for perm in product(*(["123"]*5)) ]
 from tqdm import tqdm
-from collections import defaultdict
+# from collections import defaultdict
 
-count_dict = {}
-for ea_guess_word in tqdm(dict_ws.words):
-    count_dict[ea_guess_word] = {}
-    for ea_dict_word in ans_ws.words:
-        env = WordleEnv(ea_dict_word)
-        ea_constraint = Constraint(env.guess(ea_guess_word), ea_guess_word)
-        count_dict[ea_guess_word][ea_dict_word] = ea_constraint.count_filtered(dict_ws)
+# count_dict = {}
+# for ea_guess_word in tqdm(dict_ws.words):
+#     count_dict[ea_guess_word] = {}
+#     for ea_dict_word in ans_ws.words:
+#         env = WordleEnv(ea_dict_word)
+#         ea_constraint = Constraint(env.guess(ea_guess_word), ea_guess_word)
+#         count_dict[ea_guess_word][ea_dict_word] = ea_constraint.count_filtered(dict_ws)
 
-import pickle
-pickle.dump(count_dict, open('count_dict.pickle', 'wb'))
+# import pickle
+# pickle.dump(count_dict, open('count_dict.pickle', 'wb'))
 
 
 
@@ -117,6 +117,14 @@ pickle.dump(count_dict, open('count_dict.pickle', 'wb'))
 #         total_filtered += Constraint(ea_response, ea_guess_word).count_filtered(dict_ws)
 #     print(len(dict_ws.words), total_filtered)
     
+# Test cases from 3B1B
+assert("00202" == WordleEnv("abide").guess("speed"))
+assert("20220" == WordleEnv("erase").guess("speed"))
+assert("10100" == WordleEnv("steal").guess("speed"))
+assert("02120" == WordleEnv("crepe").guess("speed"))
 
-# env = WordleEnv("shake")
-# print(env.guess("sweet"))
+# We can use this to check for bugs
+
+for ea_guess_word in tqdm(dict_ws.words):
+    for ea_dict_word in dict_ws.words:
+        WordleEnv(ea_dict_word).guess(ea_guess_word)

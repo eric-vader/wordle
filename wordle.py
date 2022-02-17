@@ -1,6 +1,8 @@
 from collections import Counter, defaultdict
 import copy
 from itertools import product
+import pickle
+import numpy as np
 
 def is_wordpos_correct(ws, cs):
     for w, c in zip(ws, cs):
@@ -18,14 +20,20 @@ def is_wordpos_correct(ws, cs):
 class WordSpace(object):
     def __init__(self, file_name):
         with open(file_name) as word_file:
-            self.words = set([ w.lower() for w in word_file.read().split() if w.isalpha()])
+            self.dict_words = set([ w.lower() for w in word_file.read().split() if w.isalpha()])
+            self.words = self.dict_words.copy()
         
         self.freq_map_words = {}
         for ea_w in self.words:
             unique_chars_counter = Counter(ea_w)
             self.freq_map_words[ea_w] = unique_chars_counter
+
+        self.guess_responses_count_map = pickle.load( open( "guess_responses_count_map.pickle", "rb" ) )
+
     def copy(self):
         return copy.deepcopy(self)
+    def apply(self, response, guess_word):
+        self.words = self.guess_responses_count_map[guess_word][response].intersection(self.words)
 
 class Constraint(object):
     def __init__(self, response, action_word):
@@ -89,12 +97,13 @@ class WordleEnv(object):
 
 
 dict_ws = WordSpace("words_wordle.txt")
-ans_ws = WordSpace("words_wordle_ans.txt")
-c = Constraint("11111", "brawl")
-print(c.apply_to(dict_ws).words)
+#ans_ws = WordSpace("words_wordle_ans.txt")
+ans_ws = dict_ws
+# c = Constraint("11111", "brawl")
+# print(c.apply_to(dict_ws).words)
 
 # print(list(product(*[[1,2,3],[1,2,3],[1,2,3]])))
-# responses_perm = [ ''.join(perm) for perm in product(*(["123"]*5)) ]
+responses_perm = [ ''.join(perm) for perm in product(*(["012"]*5)) ]
 from tqdm import tqdm
 # from collections import defaultdict
 
@@ -124,7 +133,50 @@ assert("10100" == WordleEnv("steal").guess("speed"))
 assert("02120" == WordleEnv("crepe").guess("speed"))
 
 # We can use this to check for bugs
+# guess_responses_count_map = {}
+# for ea_guess_word in tqdm(dict_ws.words):
+#     guess_responses_count_map[ea_guess_word] = { ea_r : set() for ea_r in responses_perm }
+#     for ea_dict_word in ans_ws.words:
+#         guess_responses_count_map[ea_guess_word][WordleEnv(ea_dict_word).guess(ea_guess_word)].add(ea_dict_word)
 
-for ea_guess_word in tqdm(dict_ws.words):
-    for ea_dict_word in dict_ws.words:
-        WordleEnv(ea_dict_word).guess(ea_guess_word)
+# pickle.dump(guess_responses_count_map, open('guess_responses_count_map.pickle', 'wb'))
+
+for i in range(6):
+
+    max_guess_word = None
+    max_entropy = 0
+    guess_entropy_map = {}
+
+    for ea_guess_word in tqdm(dict_ws.dict_words):
+        counts = []
+        for ea_response, ea_dict_words in dict_ws.guess_responses_count_map[ea_guess_word].items():
+            n_words = len(ea_dict_words.intersection(dict_ws.words))
+            if n_words != 0:
+                counts.append(n_words)
+        probabilities = np.array(counts)/np.sum(counts)
+        entropy = -np.sum(probabilities * np.log2(probabilities))
+
+        guess_entropy_map[ea_guess_word] = entropy
+
+        if entropy > max_entropy:
+            max_guess_word = ea_guess_word
+            max_entropy = entropy
+    
+    # max_guess_word = input("Current Word: ")
+
+    possible_target_words = list(sorted(dict_ws.words, key=lambda w:-guess_entropy_map[w]))
+    if len(possible_target_words) < 10:
+        print("Possible Targets:")
+        for ea_possible in possible_target_words:
+            print(ea_possible, guess_entropy_map[ea_possible])
+    
+    if max_guess_word == None:
+        max_entropy = 0
+        max_guess_word = possible_target_words[0]
+
+    print("Guess", max_guess_word, max_entropy)
+
+    response = input("Enter action (1 for correct, 2 for wrong pos, 0 else): ")
+
+    dict_ws.apply(response, max_guess_word)
+    

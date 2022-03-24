@@ -5,6 +5,7 @@
 import copy
 import pickle
 import numpy as np
+import re
 
 from collections import Counter, defaultdict
 from itertools import product
@@ -26,6 +27,7 @@ def is_wordpos_correct(ws, cs):
 class WordSpace(object):
     responses_perm = [ ''.join(perm) for perm in product(*(["012"]*5)) ]
     def __init__(self, file_name):
+        
         with open(file_name) as word_file:
             self.dict_words = set([ w.lower() for w in word_file.read().split() if w.isalpha()])
             self.words = self.dict_words.copy()
@@ -36,8 +38,11 @@ class WordSpace(object):
             self.freq_map_words[ea_w] = unique_chars_counter
 
         try:
+            print("Loading pre-compute cache...")
             self.guess_responses_count_map = pickle.load( open( "guess_responses_count_map.pickle", "rb" ) )
         except FileNotFoundError as e:
+            # Pre-compute
+            print("Pre-computing...")
             self.guess_responses_count_map = {}
             for ea_guess_word in tqdm(self.words):
                 self.guess_responses_count_map[ea_guess_word] = { ea_r : set() for ea_r in WordSpace.responses_perm }
@@ -128,6 +133,7 @@ if __name__ == '__main__':
         max_entropy = 0
         guess_entropy_map = {}
 
+        print(f"Starting round {i+1}...")
         for ea_guess_word in tqdm(dict_ws.dict_words):
             counts = []
             for ea_response, ea_dict_words in dict_ws.guess_responses_count_map[ea_guess_word].items():
@@ -147,15 +153,22 @@ if __name__ == '__main__':
         if len(possible_target_words) < 10:
             print("Possible Targets:")
             for ea_possible in possible_target_words:
-                print(ea_possible, guess_entropy_map[ea_possible])
+                print("{ea_possible} [h2={guess_entropy_map[ea_possible]}]")
         
         if max_guess_word == None:
             max_entropy = 0
             max_guess_word = possible_target_words[0]
 
-        print("Guess", max_guess_word, max_entropy)
+        print(f"Guess {max_guess_word} [h2={max_entropy}]")
 
-        response = input("Enter action (1 for correct, 2 for wrong pos, 0 else): ")
+        response = '' 
+        while not re.match("^[012]{5}$", response):
+            if response != '':
+                print("Error, enter a valid observation; 5 digits with 0,1,2.")
+            response = input("Enter observation (1 for correct, 2 for wrong pos, 0 else):")
+
+        if response == '11111':
+            print("You have won!")
 
         dict_ws.apply(response, max_guess_word)
         

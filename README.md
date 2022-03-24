@@ -2,7 +2,7 @@
 
 This is an example implementation of the wordle bot; the heuristic used in the current implementation is using information entropy:
 
-$$h_2(s_i)=\sum_{j\in[1,3^5]}\Bigg[\frac{|C_{i}^{(j)}|}{|C_{i-1}|}\log_2{\frac{|C_{i}^{(j)}|}{|C_{i-1}|}}\Bigg]$$
+<img src="https://render.githubusercontent.com/render/math?math=h_2(s_i)=\sum_{j\in[1,3^5]}\Bigg[\frac{|C_{i}^{(j)}|}{|C_{i-1}|}\log_2{\frac{|C_{i}^{(j)}|}{|C_{i-1}|}}\Bigg]">
 
 The heuristic is used for $1$-lookahead, it would be possible to consider multi-step lookahead.
 

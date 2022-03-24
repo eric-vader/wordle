@@ -112,7 +112,7 @@ class WordleEnv(object):
 
         return ''.join(map(str, response))
 
-
+# Test cases from 3B1B
 assert("00202" == WordleEnv("abide").guess("speed"))
 assert("20220" == WordleEnv("erase").guess("speed"))
 assert("10100" == WordleEnv("steal").guess("speed"))
@@ -121,9 +121,6 @@ assert("02120" == WordleEnv("crepe").guess("speed"))
 if __name__ == '__main__':
 
     dict_ws = WordSpace("words_wordle.txt")
-
-    # Test cases from 3B1B
-
 
     for i in range(6):
 
@@ -146,8 +143,6 @@ if __name__ == '__main__':
                 max_guess_word = ea_guess_word
                 max_entropy = entropy
         
-        # max_guess_word = input("Current Word: ")
-
         possible_target_words = list(sorted(dict_ws.words, key=lambda w:-guess_entropy_map[w]))
         if len(possible_target_words) < 10:
             print("Possible Targets:")

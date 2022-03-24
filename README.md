@@ -19,7 +19,11 @@ The three word banks in the repo are as described:
 In the root directory of this repository,
 
 1. Install required dependencies `pip install -r requirements.txt`
-1. Run the bot `python wordle.py`
+1. Run the bot `python wordle.py`.
+    1. In the first run, it will pre-compute some data and it will take some time; it will generate a pickle file of 818MB.
+    1. In subsequent runs, it will be faster relying on that pre-compute.
+
+The bot is currently used with the `words_wordle.txt` as the dictionary $D$.
 
 ## Licence
 
